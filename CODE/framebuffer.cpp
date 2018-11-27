@@ -50,6 +50,9 @@ float ClampBetweenZeroAndOne(float val)
 FrameBuffer::FrameBuffer(int u0, int v0,int _w, int _h) 
 	: Fl_Gl_Window(u0, v0, _w, _h, 0) {
 
+	// is hardware
+	ishw = false;
+
 	w = _w;
 	h = _h;
 	pix = new unsigned int[w*h];
@@ -60,7 +63,15 @@ FrameBuffer::FrameBuffer(int u0, int v0,int _w, int _h)
 
 void FrameBuffer::draw() {
 
-	glDrawPixels(w, h, GL_RGBA, GL_UNSIGNED_BYTE, pix);
+	if (ishw)
+	{
+		scene->RenderHW();
+	}
+	else
+	{
+		glDrawPixels(w, h, GL_RGBA, GL_UNSIGNED_BYTE, pix);
+	}
+
 
 }
 

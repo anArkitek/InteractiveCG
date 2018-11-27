@@ -69,5 +69,8 @@ public:
 	void RenderFilled(PPC *ppc, FrameBuffer * fb);
 
 	std::vector<Point> GenBillboard(V3 src);
+
+	void RayTrace(PPC *ppc, FrameBuffer *fb);
+	void RenderHW();
 };
 

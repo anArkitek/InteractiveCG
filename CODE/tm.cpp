@@ -474,3 +474,56 @@ std::vector<Point> TM::GenBillboard(V3 src)
 	return points;
 	//std::cout << points[3].pos << std::endl;
 }
+
+
+void TM::RayTrace(PPC *ppc, FrameBuffer *fb) {
+
+	for (int v = 0; v < fb->h; v++) {
+		fb->DrawRectangle(0, v, fb->w - 1, v, 0xFFFFFFFF);
+		for (int u = 0; u < fb->w; u++) {
+			V3 ray = ppc->c + ppc->a*((float)u + .5f) +
+				ppc->b*((float)v + 0.5f);
+			V3 O = ppc->C;
+			for (int tri = 0; tri < trisN; tri++) {
+				M33 M;
+				M.SetColumn(0, verts[tris[3 * tri + 0]]);
+				M.SetColumn(1, verts[tris[3 * tri + 1]]);
+				M.SetColumn(2, verts[tris[3 * tri + 2]]);
+				M = M.Inverted();
+				V3 q2 = M * O;
+				V3 q3 = M * ray;
+				float w = (1 - q2[0] - q2[1] - q2[2]) / (q3[0] + q3[1] + q3[2]);
+				V3 abc = q2 + q3 * w;
+				if (abc[0] < 0.0f || abc[1] < 0.0f || abc[2] < 0.0f)
+					continue;
+				if (!fb->Visible(u, v, 1.0f / w))
+					continue;
+				V3 currCol =
+					colors[tris[3 * tri + 0]] * abc[0] +
+					colors[tris[3 * tri + 1]] * abc[1] +
+					colors[tris[3 * tri + 2]] * abc[2];
+				fb->Set(u, v, currCol.GetColor());
+			}
+		}
+		fb->DrawRectangle(0, v + 1, fb->w - 1, v + 1, 0xFF0000FF);
+		fb->redraw();
+		Fl::check();
+	}
+
+}
+
+
+void TM::RenderHW()
+{
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+
+	glVertexPointer(3, GL_FLOAT, 0, (float*)verts);
+	glColorPointer(3, GL_FLOAT, 0, (float*)colors);
+
+	glDrawElements(GL_TRIANGLES, 3 * trisN, GL_UNSIGNED_INT, tris);
+
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+

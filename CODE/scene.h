@@ -23,8 +23,14 @@ public:
 	// set BGR and clear Z-Buffer then render objects
 	void Render(PPC *currPPC, FrameBuffer *currfb);
 
+	// Render Hardware
+	void RenderHW();
+
 	GUI *gui;
 	FrameBuffer *fb, *fb3;
+
+	// hardware framebuffer
+	FrameBuffer *hwfb;
 	
 	PPC *ppc, *ppc3;
 
@@ -39,7 +45,6 @@ public:
 	//FrameBuffer *text0, *text1, *text2, *text3, *text4;
 
 	CubeMap *cubemap;
-
 };
 
 extern Scene *scene;

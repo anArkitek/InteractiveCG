@@ -208,3 +208,29 @@ V3 PPC::GetRay(int u, int v)
 {
 	return a * ((float)u + 0.5f) + b * ((float)v + 0.5f) + c;
 }
+
+void PPC::SetIntrinsicsHW()
+{
+	// set view area size
+	glViewport(0, 0, w, h);
+
+	float zNear = 1.0f;
+	float zFar = 1000.0f;
+	float scf = zNear / GetFocalLength();
+	float left = -a.Length()*(float)w / 2.0f*scf;
+	float right = a.Length()*(float)w / 2.0f*scf;
+	float top = b.Length()*(float)h / 2.0f*scf;
+	float bottom = -b.Length()*(float)h / 2.0f*scf;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustum(left, right, bottom, top, zNear, zFar);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void PPC::SetExtrinsicsHW()
+{
+	V3 L = C + GetVD()*200.0f;
+	glLoadIdentity();
+	gluLookAt(C[0], C[1], C[2], L[0], L[1], L[2], -b[0], -b[1], -b[2]);
+
+}

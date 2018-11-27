@@ -84,4 +84,8 @@ public:
 	V3 UnprojectPixel(float uf, float vf, float curf);
 	V3 Unproject(V3 pP);
 	V3 GetRay(int u, int v);
+
+	// Hardware Rendering Parameters
+	void SetIntrinsicsHW();
+	void SetExtrinsicsHW();
 };

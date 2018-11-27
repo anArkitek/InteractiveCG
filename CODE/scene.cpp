@@ -57,6 +57,11 @@ Scene::Scene() {
 	fb3->label("Billboard");
 	fb3->show();
 
+	// Hardware Framebuffer
+	hwfb = new FrameBuffer(u0 + fb->w + 600, v0, w, h);
+	hwfb->label("HW FrameBuffer");
+	hwfb->ishw = true;
+	hwfb->show();
 
 	float hfov = 55.0f;
 	ppc = new PPC(hfov, fb->w, fb->h);
@@ -111,6 +116,26 @@ void Scene::Render() {
 			//cubemap->ppcs[5]->Visualize(ppc3, fb3, 10.0f);
 		//}
 			//fb3->Draw3DPoint(L, V3(1.0f, 1.0f, 0.3f), ppc3, 7);
+	}
+}
+
+
+void Scene::RenderHW()
+{
+	glEnable(GL_DEPTH_TEST);
+
+	glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// Set camera parameters
+	ppc->SetIntrinsicsHW();
+	ppc->SetExtrinsicsHW();
+
+	for (int tmi = 0; tmi < tmsN; tmi++) {
+		tms[tmi].RenderHW();
 	}
 }
 

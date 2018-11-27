@@ -13,6 +13,10 @@ class CubeMap;
 
 class FrameBuffer : public Fl_Gl_Window {
 public:
+
+	// is hardware
+	int ishw;
+
 	unsigned int *pix;
 	float *zb;
 	int w, h;
