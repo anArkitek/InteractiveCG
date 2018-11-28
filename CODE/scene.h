@@ -7,6 +7,8 @@
 #include "tm.h"
 #include "cubemap.h"
 
+#include "CGInterface.h"
+
 
 
 class Scene {
@@ -26,11 +28,8 @@ public:
 	// Render Hardware
 	void RenderHW();
 
-	GUI *gui;
-	FrameBuffer *fb, *fb3;
-
-	// hardware framebuffer
-	FrameBuffer *hwfb;
+	// Render GPU
+	void RenderGPU();
 	
 	PPC *ppc, *ppc3;
 
@@ -45,6 +44,21 @@ public:
 	//FrameBuffer *text0, *text1, *text2, *text3, *text4;
 
 	CubeMap *cubemap;
+
+	CGInterface * cgi;
+	ShaderOneInterface *soi;
+
+	GUI *gui;
+
+	// Framebuffers
+	FrameBuffer *fb, *fb3;
+	FrameBuffer *hwfb;
+	FrameBuffer *gpufb;
+
+	// Light parameters
+	float kse;
+	float ka;
+	float mf; // morph fraction
 };
 
 extern Scene *scene;

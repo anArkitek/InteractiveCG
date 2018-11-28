@@ -17,6 +17,10 @@ using namespace std;
 
 Scene::Scene() {
 
+	// cgi & soi
+	cgi = 0;
+	soi = 0;
+
 	tms = 0;
 	tmsN = 0;
 
@@ -31,6 +35,8 @@ Scene::Scene() {
 	fb = new FrameBuffer(u0, v0, w, h);
 	fb->label("SW Framebuffer");
 	fb->show();
+
+
 
 	///////////////////////////////////
 	std::vector<std::string> cubeImgPaths =
@@ -55,13 +61,20 @@ Scene::Scene() {
 
 	fb3 = new FrameBuffer(u0 + fb->w + 30, v0, w, h);
 	fb3->label("Billboard");
-	fb3->show();
+	//fb3->show();
 
 	// Hardware Framebuffer
 	hwfb = new FrameBuffer(u0 + fb->w + 600, v0, w, h);
 	hwfb->label("HW FrameBuffer");
 	hwfb->ishw = true;
 	hwfb->show();
+
+	// GPU FrameBuffer
+	gpufb = new FrameBuffer(u0, v0, w, h);
+	gpufb->label("GPU Framebuffer");
+	gpufb->isgpu = true;
+	gpufb->show();
+
 
 	float hfov = 55.0f;
 	ppc = new PPC(hfov, fb->w, fb->h);
@@ -89,6 +102,8 @@ Scene::Scene() {
 	ppc3->C = tmCs[0] + V3(50.0f, 50.0f, 50.0f);
 	ppc3->PositionAndOrient(ppc3->C, tms[1].GetCenter(), V3(0.0f, 1.0f, 0.0f));
 		
+	ka = 0.2;
+
 	Render(ppc3, fb3);
 	
 	Render();
@@ -140,6 +155,42 @@ void Scene::RenderHW()
 }
 
 
+void Scene::RenderGPU()
+{
+	// if the first time, call per session initialization
+	if (cgi == NULL) {
+		cgi = new CGInterface();
+		cgi->PerSessionInit();
+		soi = new ShaderOneInterface();
+		soi->PerSessionInit(cgi);
+	}
+
+	// clear the framebuffer
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0, 0.0f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// set intrinsics
+	ppc->SetIntrinsicsHW();
+	// set extrinsics
+	ppc->SetExtrinsicsHW();
+
+	// per frame initialization
+	cgi->EnableProfiles();
+	soi->PerFrameInit();
+	soi->BindPrograms();
+
+	// render geometry
+	for (int tmi = 0; tmi < tmsN; tmi++) {
+		tms[tmi].RenderHW();
+	}
+
+	soi->PerFrameDisable();
+	cgi->DisableProfiles();
+}
+
+
+
 void Scene::Render(PPC *currppc, FrameBuffer *currfb)
 {
 	currfb->SetBGR(0x003F3F3F);
@@ -161,7 +212,6 @@ void Scene::Render(PPC *currppc, FrameBuffer *currfb)
 		tms[tmi].RenderMesh(MODEL_SPACE_INTERPOLATION, currppc, currfb, ppc3, fb3, cubemap, nullptr, &bb_pts);
 		// tms[tmi].RenderFilled(currppc, currfb);		
 	}
-	
 	currfb->redraw();
 }
 

@@ -16,6 +16,7 @@ public:
 
 	// is hardware
 	int ishw;
+	int isgpu;
 
 	unsigned int *pix;
 	float *zb;

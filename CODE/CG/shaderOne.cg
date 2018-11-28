@@ -1,0 +1,100 @@
+
+struct VertexDataInput {
+	float4 vertex: POSITION;
+	float3 normal: NORMAL;
+	float3 color: COLOR;
+};
+
+struct VertexDataOutput {
+	float4 projv  : POSITION;
+	float3 normal: TEXCOORD0;
+	float3 vxyz: TEXCOORD1;
+	float3 color : COLOR;
+};
+
+struct PixelDataOutput {
+	float3 color : COLOR;
+};
+
+VertexDataOutput VertexMain(VertexDataInput vdi, 
+  uniform float4x4 modelViewProj, 
+  uniform float MR, uniform float3 MC, uniform float Mf) {
+
+  VertexDataOutput ret;
+//  ret.projv = mul(modelViewProj, vdi.vertex);
+
+  float3 rdir = normalize(vdi.vertex.xyz - MC);
+  float3 Vp = MC + rdir*MR;
+  float3 mvertex = vdi.vertex.xyz + (Vp-vdi.vertex.xyz)*Mf;
+  ret.projv = mul(modelViewProj, float4(mvertex, 1.0f));
+
+  ret.normal = vdi.normal;
+  ret.vxyz = vdi.vertex.xyz;
+  ret.color = vdi.color;
+  return ret;
+
+}
+
+
+TRIANGLE void GeometryMain(AttribArray<VertexDataOutput> tverts,
+	uniform float4x4 modelViewProj) {
+
+	emitVertex(tverts[0]);
+	emitVertex(tverts[1]);
+	emitVertex(tverts[2]);
+	return;
+
+}
+
+
+PixelDataOutput FragmentMain(VertexDataOutput pdi, uniform float ka,
+	uniform float3 C0, uniform float3 C1) {
+
+  PixelDataOutput ret;
+  ret.color = pdi.color;
+  return ret;
+
+//  float ka = 0.2f;
+  float3 L = float3(0.0f, 0.0f, 0.0f);
+  float3 lv = float3(0.0f, 0.0f, 1.0f);
+  float kd = mul(pdi.normal, lv);
+  kd = (kd < 0.0f) ? 0.0f : kd;
+  float3 mc = float3(1.0f, 0.0f, 0.0f);
+  ret.color.rgb = mc * (ka + (1.0f-ka)*kd);
+
+//  ret.color.rgb = (pdi.normal + float3(1.0f, 1.0f, 1.0f))/2.0f;
+//  ret.color.rgb = float3(1.0f, 0.0f, 0.0f);
+
+//	ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
+//	ret.color.g = ka;
+	
+	ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
+	ret.color.rgb = (C0 + float3(150.0f, 150.0f, 150.0f)) / 30.0f;
+
+    return ret;
+
+
+	// BILLBOARD REFLECTIONS
+
+	// create reflected ray at this current pixel
+
+	// eye ray is eye-3D surface point at this current pixel
+	//		eye needs to be passed in as uniform float3
+	//		3D surface point is provided by pdi.vxyz
+	// normal is provided as pdi.normal
+	// reflect eye ray over normal to get reflected ray
+
+	// intersect reflected ray with billboards
+	// if multiple intersections, keep closest one
+	// if no intersections, lookup reflected ray in environment mapping
+	// billboard is passed in as uniform parameter, e.g. float4x4
+	// EXTRA CREDIT: environment mapping is a uniform input parameter "cube sampler or something like that"
+
+	// SOFT SHADOWS CAST BY RECTANGULAR LIGHT SOURCE
+	// for all light sample rows
+	//		for all light samples in current row
+	//			define light ray = light sample - 3D surface point
+	//			intersect light ray with all box faces
+	//			if no intersection, increment fragment light counter
+
+}

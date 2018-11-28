@@ -67,6 +67,10 @@ void FrameBuffer::draw() {
 	{
 		scene->RenderHW();
 	}
+	else if (isgpu)
+	{
+		scene->RenderGPU();
+	}
 	else
 	{
 		glDrawPixels(w, h, GL_RGBA, GL_UNSIGNED_BYTE, pix);
