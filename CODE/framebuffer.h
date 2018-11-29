@@ -4,6 +4,7 @@
 #include <FL/Fl_Gl_Window.H>
 #include <GL/glut.h>
 #include <vector>
+#include <unordered_map>
 
 #include "v3.h"
 #include "ppc.h"
@@ -23,7 +24,9 @@ public:
 	float *zb;
 	int w, h;
 	
+	std::vector<std::string> texNames;
 	std::vector<FrameBuffer *> gpuTextures;
+	std::unordered_map<std::string, GLuint> texName_id;
 	
 	FrameBuffer(int u0, int v0, int _w, int _h);
 	void draw();

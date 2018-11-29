@@ -94,6 +94,10 @@ bool ShaderOneInterface::PerSessionInit(CGInterface *cgi) {
 	vertexMorphRadius = cgGetNamedParameter(vertexProgram, "MR");
 	vertexMorphCenter = cgGetNamedParameter(vertexProgram, "MC");
 	vertexMorphFraction = cgGetNamedParameter(vertexProgram, "Mf");
+	
+	// Texture
+	fragmentTex0 = cgGetNamedParameter(fragmentProgram, "ice_tex");
+	
 
 	return true;
 
@@ -120,6 +124,11 @@ void ShaderOneInterface::PerFrameInit() {
 	float mr = (aabb.c1 - aabb.c0).Length() / 3.0f;
 	cgSetParameter1f(vertexMorphRadius, mr);
 	cgSetParameter1f(vertexMorphFraction, scene->mf);
+
+	// Texture
+	std::string texName = scene->gpufb->texNames[0];
+	cgGLSetTextureParameter(fragmentTex0, scene->gpufb->texName_id[texName]);
+	cgGLEnableTextureParameter(fragmentTex0);
 
 }
 

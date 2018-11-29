@@ -187,6 +187,9 @@ void Scene::RenderHW()
 
 void Scene::RenderGPU()
 {
+
+
+
 	// if the first time, call per session initialization
 	if (cgi == NULL) {
 		cgi = new CGInterface();
@@ -205,16 +208,24 @@ void Scene::RenderGPU()
 	// set extrinsics
 	ppc->SetExtrinsicsHW();
 
+	
+	std::string tmpTexName = ".\\texture_src\\quad_ice.tiff";
+
+	gpufb->LoadTiffToShader(&tmpTexName[0]);
+
 	// per frame initialization
 	cgi->EnableProfiles();
 	soi->PerFrameInit();
 	soi->BindPrograms();
+
 
 	// render geometry
 	for (int tmi = 0; tmi < tmsN; tmi++) 
 	{
 		tms[tmi].RenderHW(ppc, gpufb);
 	}
+
+	
 
 	ground->RenderHW(ppc, gpufb);
 
@@ -238,6 +249,7 @@ void Scene::Render(PPC *currppc, FrameBuffer *currfb)
 	currfb->SetBGR(0x003F3F3F);
 	currfb->ClearZB(0.0f);
 
+	// Billboard
 	// Billboard
 	std::vector<Point> bb_pts = tms[1].GenBillboard(ppc3->C);
 

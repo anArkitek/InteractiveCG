@@ -35,6 +35,7 @@ class ShaderOneInterface {
 	CGparameter fragmentKa; // ambient coefficient for fragment shader
 	CGparameter fragmentC0, fragmentC1; // two corners of aabb
 	CGparameter vertexMorphRadius, vertexMorphCenter, vertexMorphFraction; // for morphing mesh to sphere
+	CGparameter fragmentTex0;	// Texture0 to fragment
 public:
 	ShaderOneInterface() {};
 	bool PerSessionInit(CGInterface *cgi); // per session initialization

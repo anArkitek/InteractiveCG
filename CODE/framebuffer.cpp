@@ -194,23 +194,15 @@ void FrameBuffer::LoadTiffToShader(char *fname)
 		
 	FrameBuffer *tmpfb = new FrameBuffer(0, 0, width, height);
 
-	delete[] tmpfb->pix;
-	pix = new unsigned int[w*h];
-
-	size(w, h);
-	glFlush();
-	glFlush();
-
-	if (TIFFReadRGBAImage(in, w, h, pix, 0) == 0) {
-		cerr << "failed to load " << fname << endl;
-	}
+	tmpfb->LoadTiff(fname);
 
 	TIFFClose(in);
 
 	gpuTextures.push_back(tmpfb);
-	
-	delete tmpfb;
 
+	
+
+	// Bind to shaders
 	GLuint texID;
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
@@ -221,13 +213,13 @@ void FrameBuffer::LoadTiffToShader(char *fname)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, gpuTextures[0]->pix);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	// Check errors
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
 	{
 		cerr << " Shader failed to load " << fname << "\n";
 	}
 	
+	texName_id[fname] = texID;
 }
 
 

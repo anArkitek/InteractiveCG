@@ -56,8 +56,11 @@ TRIANGLE void GeometryMain(AttribArray<VertexDataOutput> tverts,
 }
 
 
-PixelDataOutput FragmentMain(VertexDataOutput pdi, uniform float ka,
-	uniform float3 C0, uniform float3 C1) {
+PixelDataOutput FragmentMain(	VertexDataOutput pdi, 
+								uniform float ka,
+								uniform float3 C0, 
+								uniform float3 C1
+								uniform sampler2D ice_tex) {
 
   PixelDataOutput ret;
   ret.color = pdi.color;
@@ -78,7 +81,7 @@ PixelDataOutput FragmentMain(VertexDataOutput pdi, uniform float ka,
 	
 	// ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
 	// ret.color.rgb = (C0 + float3(150.0f, 150.0f, 150.0f)) / 30.0f;
-	ret.color.rgb = float3(length(pdi.vtexCoord));
+	ret.color.rgb = float3(ice_tex, pdi.vTexCoord);
 
     return ret;
 
