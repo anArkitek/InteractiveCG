@@ -3,22 +3,30 @@ struct VertexDataInput {
 	float4 vertex: POSITION;
 	float3 normal: NORMAL;
 	float3 color: COLOR;
+	float2 texCoord: TEXCOORD;
 };
+
 
 struct VertexDataOutput {
 	float4 projv  : POSITION;
 	float3 normal: TEXCOORD0;
 	float3 vxyz: TEXCOORD1;
 	float3 color : COLOR;
+	float2 vtexCoord: TEXCOORD2;
 };
+
 
 struct PixelDataOutput {
 	float3 color : COLOR;
 };
 
+
 VertexDataOutput VertexMain(VertexDataInput vdi, 
-  uniform float4x4 modelViewProj, 
-  uniform float MR, uniform float3 MC, uniform float Mf) {
+  							uniform float4x4 modelViewProj, 
+  							uniform float MR, 
+							uniform float3 MC, 
+							uniform float Mf) 
+{
 
   VertexDataOutput ret;
 //  ret.projv = mul(modelViewProj, vdi.vertex);
@@ -31,6 +39,7 @@ VertexDataOutput VertexMain(VertexDataInput vdi,
   ret.normal = vdi.normal;
   ret.vxyz = vdi.vertex.xyz;
   ret.color = vdi.color;
+  ret.vtexCoord = vdi.texCoord;
   return ret;
 
 }
@@ -52,7 +61,6 @@ PixelDataOutput FragmentMain(VertexDataOutput pdi, uniform float ka,
 
   PixelDataOutput ret;
   ret.color = pdi.color;
-  return ret;
 
 //  float ka = 0.2f;
   float3 L = float3(0.0f, 0.0f, 0.0f);
@@ -68,8 +76,9 @@ PixelDataOutput FragmentMain(VertexDataOutput pdi, uniform float ka,
 //	ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
 //	ret.color.g = ka;
 	
-	ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
-	ret.color.rgb = (C0 + float3(150.0f, 150.0f, 150.0f)) / 30.0f;
+	// ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
+	// ret.color.rgb = (C0 + float3(150.0f, 150.0f, 150.0f)) / 30.0f;
+	ret.color.rgb = float3(length(pdi.vtexCoord));
 
     return ret;
 

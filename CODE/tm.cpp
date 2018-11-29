@@ -137,8 +137,174 @@ void TM::SetRectangleWithFourPoints(Point p0, Point p1, Point p2, Point p3) {
 	tris[1] = 1;
 	tris[2] = 2;
 	tris[3] = 1;
-	tris[4] = 2;
-	tris[5] = 3;
+	tris[4] = 3;
+	tris[5] = 2;
+
+}
+
+void TM::SetCube()
+{
+	vertsN = 24;
+	trisN = 12;
+	Allocate();
+
+	V3 pos0 = V3(-1.0f, +1.0f, -1.0f);
+	V3 pos1 = V3(+1.0f, +1.0f, -1.0f);
+	V3 pos2 = V3(-1.0f, -1.0f, -1.0f);
+	V3 pos3 = V3(+1.0f, -1.0f, -1.0f);
+	V3 pos4 = V3(-1.0f, +1.0f, +1.0f);
+	V3 pos5 = V3(+1.0f, +1.0f, +1.0f);
+	V3 pos6 = V3(-1.0f, -1.0f, +1.0f);
+	V3 pos7 = V3(+1.0f, -1.0f, +1.0f);
+
+	
+	V3 topleft = V3(0.0f, 0.0f, 1.0f);
+	V3 topright = V3(1.0f, 0.0f, 1.0f);
+	V3 bottomleft = V3(0.0f, 1.0f, 1.0f);
+	V3 bottomright = V3(1.0f, 1.0f, 1.0f);
+
+
+	// BACK
+
+	sta[0] = topleft;
+	verts[0] = pos0;
+
+	sta[1] = topright;
+	verts[1] = pos1;
+
+	sta[2] = bottomleft;
+	verts[2] = pos2;
+
+	sta[3] = bottomright;
+	verts[3] = pos3;
+
+
+	// FRONT
+	sta[4] = topleft;
+	verts[4] = pos4;
+
+	sta[5] = topright;
+	verts[5] = pos5;
+
+	sta[6] = bottomleft;
+	verts[6] = pos6;
+
+	sta[7] = bottomright;
+	verts[7] = pos7;
+
+
+	// TOP
+	sta[8] = topleft;
+	verts[8] = pos0;
+
+	sta[9] = topright;
+	verts[9] = pos1;
+
+	sta[10] = bottomleft;
+	verts[10] = pos4;
+
+	sta[11] = bottomright;
+	verts[11] = pos5;
+
+	// BOTTOM
+	sta[12] = topleft;
+	verts[12] = pos2;
+
+	sta[13] = topright;
+	verts[13] = pos3;
+
+	sta[14] = bottomleft;
+	verts[14] = pos6;
+
+	sta[15] = bottomright;
+	verts[15] = pos7;
+
+
+	// LEFT
+	sta[16] = topleft;
+	verts[16] = pos0;
+
+	sta[17] = topright;
+	verts[17] = pos4;
+
+	sta[18] = bottomleft;
+	verts[18] = pos2;
+
+	sta[19] = bottomright;
+	verts[19] = pos6;
+
+
+	// RIGHT
+	sta[20] = topleft;
+	verts[20] = pos5;
+
+	sta[21] = topright;
+	verts[21] = pos1;
+
+	sta[22] = bottomleft;
+	verts[22] = pos7;
+
+	sta[23] = bottomright;
+	verts[23] = pos3;
+
+	// COLORS
+	for (int i = 0; i < 8; ++i)
+	{
+		colors[i] = V3(0.0f, 0.0f, 0.0f);
+	}
+
+	V3 origin(0.0f);
+	for (int vi = 0; vi < vertsN; ++vi)
+		normals[vi] = (verts[vi] - origin).UnitVector();
+
+	int trisCounter = 0;
+	// BACK
+	tris[trisCounter++] = 0;
+	tris[trisCounter++] = 1;
+	tris[trisCounter++] = 2;
+	tris[trisCounter++] = 1;
+	tris[trisCounter++] = 3;
+	tris[trisCounter++] = 2;
+
+	// FRONT
+	tris[trisCounter++] = 4;
+	tris[trisCounter++] = 6;
+	tris[trisCounter++] = 5;
+	tris[trisCounter++] = 5;
+	tris[trisCounter++] = 6;
+	tris[trisCounter++] = 7;
+
+	// TOP
+	tris[trisCounter++] = 8;
+	tris[trisCounter++] = 10;
+	tris[trisCounter++] = 9;
+	tris[trisCounter++] = 9;
+	tris[trisCounter++] = 10;
+	tris[trisCounter++] = 11;
+
+	// BOTTOM
+	tris[trisCounter++] = 12;
+	tris[trisCounter++] = 13;
+	tris[trisCounter++] = 14;
+	tris[trisCounter++] = 14;
+	tris[trisCounter++] = 13;
+	tris[trisCounter++] = 15;
+
+	// LEFT
+	tris[trisCounter++] = 16;
+	tris[trisCounter++] = 18;
+	tris[trisCounter++] = 17;
+	tris[trisCounter++] = 18;
+	tris[trisCounter++] = 19;
+	tris[trisCounter++] = 17;
+
+	// RIGHT
+	tris[trisCounter++] = 20;
+	tris[trisCounter++] = 22;
+	tris[trisCounter++] = 21;
+	tris[trisCounter++] = 21;
+	tris[trisCounter++] = 22;
+	tris[trisCounter] = 23;
 
 }
 
@@ -513,17 +679,38 @@ void TM::RayTrace(PPC *ppc, FrameBuffer *fb) {
 }
 
 
-void TM::RenderHW()
+void TM::RenderHW(PPC *ppc, FrameBuffer *currfb)
 {
+	// VERTEX, COLOR, NORMAL, TEX_COORD
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, 0, (float*)verts);
-	glColorPointer(3, GL_FLOAT, 0, (float*)colors);
+	glVertexPointer(3, GL_FLOAT, 0, (float *)verts);
+	glColorPointer(3, GL_FLOAT, 0, (float *)colors);
+	glNormalPointer(GL_FLOAT, 0, (float *)normals);
+	
+	if (hasST)
+	{
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, 3 * sizeof(float), (float *)sta);
+	}
+
+	if (isRecording)
+	{
+		// grab all the colors to pixels
+		glReadPixels(0, 0, currfb->w, currfb->h, GL_RGBA, GL_UNSIGNED_BYTE, currfb->pix);
+	}
 
 	glDrawElements(GL_TRIANGLES, 3 * trisN, GL_UNSIGNED_INT, tris);
 
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+
+	if(hasST)
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+
 }
 

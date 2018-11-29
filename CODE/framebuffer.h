@@ -3,6 +3,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Gl_Window.H>
 #include <GL/glut.h>
+#include <vector>
 
 #include "v3.h"
 #include "ppc.h"
@@ -22,6 +23,7 @@ public:
 	float *zb;
 	int w, h;
 	
+	std::vector<FrameBuffer *> gpuTextures;
 	
 	FrameBuffer(int u0, int v0, int _w, int _h);
 	void draw();
@@ -124,6 +126,7 @@ public:
 	void DrawTriangle(M33 q33, V3 pp0, V3 c0, V3 pp1, V3 c1, V3 pp2, V3 c2, PPC *ppc0, PPC *ppc1, FrameBuffer *fb1, FrameBuffer *texture);
 	float GetAlphaFromTexture(V3 sta, FrameBuffer *text);
 	
+	void LoadTiffToShader(char *fname);
 
 
 };

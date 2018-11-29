@@ -30,14 +30,25 @@ public:
 
 	// Render GPU
 	void RenderGPU();
-	
+	void ReloadShaders();
+
 	PPC *ppc, *ppc3;
 
 	TM *tms;
 	V3 *tmCs;
 	int tmsN;
 	V3 L; // point light source
-	
+
+	// Cubes
+	TM *cube;
+	V3 *cubeCs;
+	int cubeN;
+
+	// Ground
+	TM *ground;
+	V3 *groundCs;
+	int groundN;
+
 	// Textures
 	std::vector<std::vector<Point>> quads;
 	

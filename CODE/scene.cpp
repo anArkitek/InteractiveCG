@@ -7,6 +7,7 @@
 #include <ctime>
 #include <memory>
 #include <string>
+#include <vector>
 
 Scene *scene;
 
@@ -67,7 +68,7 @@ Scene::Scene() {
 	hwfb = new FrameBuffer(u0 + fb->w + 600, v0, w, h);
 	hwfb->label("HW FrameBuffer");
 	hwfb->ishw = true;
-	hwfb->show();
+	// hwfb->show();
 
 	// GPU FrameBuffer
 	gpufb = new FrameBuffer(u0, v0, w, h);
@@ -97,16 +98,45 @@ Scene::Scene() {
 	float tmSize = 100.0f;
 	tms[0].PositionAndSize(tmCs[0], tmSize);
 	tms[1].PositionAndSize(tmCs[1], tmSize);
+
+
+	// THREE CUBES
+	std::vector<TM *> cubes;
+	for (int i = 0; i < 3; i++)
+	{
+		TM *cube = new TM();
+		cubes.push_back(cube);
+	}
 	
-	//?
+	// GROUND
+	ground = new TM();
+	ground->hasST = 1;
+	V3 groundCenter = ppc->C + ppc->GetVD() * 500.0f;
+
+	V3 quad_pos0 = groundCenter + V3(-500.0f, 0.0f, -500.0f);
+	V3 quad_pos1 = groundCenter + V3( 500.0f, 0.0f, -500.0f);
+	V3 quad_pos2 = groundCenter + V3(-500.0f, 0.0f,  500.0f);
+	V3 quad_pos3 = groundCenter + V3(500.0f, 0.0f, 500.0f);
+	Point quad_p0(quad_pos0, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(0.0f, 0.0f, 0.0f));
+	Point quad_p1(quad_pos1, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(1.0f, 0.0f, 0.0f));
+	Point quad_p2(quad_pos2, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
+	Point quad_p3(quad_pos3, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(1.0f, 1.0f, 0.0f));
+	ground->SetRectangleWithFourPoints(quad_p0, quad_p1, quad_p2, quad_p3);
+
+
+	float ground_scf = 1.0f;
+	ground->PositionAndSize(groundCenter + V3(0.0f, -1.0f, 0.0f) * ground_scf * tmSize, tmSize * 10.0f);
+
+	// Position of PPC3
 	ppc3->C = tmCs[0] + V3(50.0f, 50.0f, 50.0f);
-	ppc3->PositionAndOrient(ppc3->C, tms[1].GetCenter(), V3(0.0f, 1.0f, 0.0f));
-		
+	//ppc3->PositionAndOrient(ppc3->C, tms[1].GetCenter(), V3(0.0f, 1.0f, 0.0f));
+	ppc3->PositionAndOrient(ppc3->C, ground->GetCenter(), V3(0.0f, 1.0f, 0.0f));
+
+
 	ka = 0.2;
 
-	Render(ppc3, fb3);
+	// Render(ppc3, fb3);
 	
-	Render();
 
 }
 
@@ -150,7 +180,7 @@ void Scene::RenderHW()
 	ppc->SetExtrinsicsHW();
 
 	for (int tmi = 0; tmi < tmsN; tmi++) {
-		tms[tmi].RenderHW();
+		tms[tmi].RenderHW(ppc, hwfb);
 	}
 }
 
@@ -181,12 +211,24 @@ void Scene::RenderGPU()
 	soi->BindPrograms();
 
 	// render geometry
-	for (int tmi = 0; tmi < tmsN; tmi++) {
-		tms[tmi].RenderHW();
+	for (int tmi = 0; tmi < tmsN; tmi++) 
+	{
+		tms[tmi].RenderHW(ppc, gpufb);
 	}
+
+	ground->RenderHW(ppc, gpufb);
+
 
 	soi->PerFrameDisable();
 	cgi->DisableProfiles();
+}
+
+void Scene::ReloadShaders()
+{
+	delete cgi;
+	delete soi;
+	cgi = nullptr;
+	soi = nullptr;
 }
 
 
@@ -212,6 +254,7 @@ void Scene::Render(PPC *currppc, FrameBuffer *currfb)
 		tms[tmi].RenderMesh(MODEL_SPACE_INTERPOLATION, currppc, currfb, ppc3, fb3, cubemap, nullptr, &bb_pts);
 		// tms[tmi].RenderFilled(currppc, currfb);		
 	}
+
 	currfb->redraw();
 }
 
@@ -221,6 +264,11 @@ void Scene::Render(PPC *currppc, FrameBuffer *currfb)
 
 void Scene::DBG() 
 {
+	{
+		ReloadShaders();
+		gpufb->redraw();
+		return;
+	}
 
 	int stepN = 360;
 	{

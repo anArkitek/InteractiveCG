@@ -45,8 +45,6 @@ float ClampBetweenZeroAndOne(float val)
 }
 
 
-
-
 FrameBuffer::FrameBuffer(int u0, int v0,int _w, int _h) 
 	: Fl_Gl_Window(u0, v0, _w, _h, 0) {
 
@@ -57,7 +55,6 @@ FrameBuffer::FrameBuffer(int u0, int v0,int _w, int _h)
 	h = _h;
 	pix = new unsigned int[w*h];
 	zb = new float[w*h];
-
 }
 
 
@@ -179,9 +176,58 @@ void FrameBuffer::LoadTiff(char* fname)
 		cerr << "failed to load " << fname << endl;
 	}
 
-	
+	TIFFClose(in);
+}
+
+
+void FrameBuffer::LoadTiffToShader(char *fname)
+{
+	TIFF* in = TIFFOpen(fname, "r");
+	if (in == NULL) {
+		cerr << fname << " could not be opened" << endl;
+		return;
+	}
+
+	int width, height;
+	TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
+	TIFFGetField(in, TIFFTAG_IMAGELENGTH, &height);
+		
+	FrameBuffer *tmpfb = new FrameBuffer(0, 0, width, height);
+
+	delete[] tmpfb->pix;
+	pix = new unsigned int[w*h];
+
+	size(w, h);
+	glFlush();
+	glFlush();
+
+	if (TIFFReadRGBAImage(in, w, h, pix, 0) == 0) {
+		cerr << "failed to load " << fname << endl;
+	}
 
 	TIFFClose(in);
+
+	gpuTextures.push_back(tmpfb);
+	
+	delete tmpfb;
+
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, gpuTextures[0]->pix);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Check errors
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+	{
+		cerr << " Shader failed to load " << fname << "\n";
+	}
+	
 }
 
 

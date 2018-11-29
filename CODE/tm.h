@@ -12,19 +12,26 @@ public:
 	V3 *verts, *colors, *normals, *sta;
 	int vertsN;
 
+	bool isRecording;
+	int hasST;
+
 	// all the indices of vertices [# = 3*N]
 	unsigned int *tris;
 	
 	// number of triangles
 	int trisN;
 
-	TM() : verts(0), vertsN(0), colors(0), normals(0), tris(0), trisN(0) {};
+	TM() : verts(0), vertsN(0), colors(0), 
+		normals(0), sta(0), tris(0), trisN(0), isRecording(0)
+		, hasST(0) {};
 	
 	// @O: center point
 	// @rw: width
 	// @rh: height
 	void SetRectangle(V3 O, float rw, float rh);
 	void SetRectangleWithFourPoints(Point p0, Point p1, Point p2, Point p3);
+	void SetCube();
+	
 	void Allocate();
 	void RenderPoints(PPC *ppc, FrameBuffer *fb);
 
@@ -71,6 +78,6 @@ public:
 	std::vector<Point> GenBillboard(V3 src);
 
 	void RayTrace(PPC *ppc, FrameBuffer *fb);
-	void RenderHW();
+	void RenderHW(PPC *ppc, FrameBuffer *currfb);
 };
 
