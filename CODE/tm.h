@@ -22,7 +22,7 @@ public:
 	int trisN;
 
 	TM() : verts(0), vertsN(0), colors(0), 
-		normals(0), sta(0), tris(0), trisN(0), isRecording(0)
+		normals(0), sta(0), tris(0), trisN(0), isRecording(1)
 		, hasST(0) {};
 	
 	// @O: center point
@@ -31,7 +31,8 @@ public:
 	void SetRectangle(V3 O, float rw, float rh);
 	void SetRectangleWithFourPoints(Point p0, Point p1, Point p2, Point p3);
 	void SetCube();
-	
+	void SetColor(V3 color);
+
 	void Allocate();
 	void RenderPoints(PPC *ppc, FrameBuffer *fb);
 

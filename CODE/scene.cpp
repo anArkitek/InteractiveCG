@@ -84,33 +84,35 @@ Scene::Scene() {
 	gui->uiw->position(u0, v0 + fb->h + 60);
 
 	// load $tmsN teapots 
-	tmsN = 2;
+	tmsN = 4;
 	tms = new TM[tmsN];
-	for (int i = 0; i < tmsN; ++i)
-	{
-		tms[i].LoadBin("geometry/teapot1K.bin");
-	}
-	
-	// place two teapots
-	tmCs = new V3[tmsN];
-	tmCs[0] = ppc->C + ppc->GetVD()*200.0f;
-	tmCs[1] = tmCs[0] + V3(-100.0f, -100.0f, -100.0f);
+
+	tms[0].SetCube();
+	tms[1].SetCube();
+	tms[2].SetCube();
+	tms[3].hasST = 1;
+
 	float tmSize = 100.0f;
-	tms[0].PositionAndSize(tmCs[0], tmSize);
-	tms[1].PositionAndSize(tmCs[1], tmSize);
+	V3 x(1.0f, 0.0f, 0.0f), z(0.0f, 0.0f, 1.0);
+	V3 tmC = ppc->C + ppc->GetVD() * 300.0f;
+	float posFactor = 0.6f;
+	tms[0].PositionAndSize(tmC, tmSize);
+	tms[1].PositionAndSize(tmC - x * tmSize * posFactor + z * tmSize * posFactor, tmSize);
+	tms[2].PositionAndSize(tmC + x * tmSize * posFactor + z * tmSize * posFactor, tmSize);
 
+	lightQuad.resize(4, V3(0.0f));
 
-	// THREE CUBES
-	std::vector<TM *> cubes;
-	for (int i = 0; i < 3; i++)
-	{
-		TM *cube = new TM();
-		cubes.push_back(cube);
-	}
-	
+	L = tms[0].GetCenter() + V3(0.0f, 1000.0f, 500.0f) * 10.0f;
+	V3 dx = V3(100.0f, 0.0f, 0.0f);
+	V3 dz = V3(0.0f, 0.0f, 100.0f);
+
+	lightQuad[0] = (L - dx - dz);
+	lightQuad[1] = (L - dx + dz);
+	lightQuad[2] = (L + dx + dz);
+	lightQuad[3] = (L + dx - dz);
+
 	// GROUND
-	ground = new TM();
-	ground->hasST = 1;
+
 	V3 groundCenter = ppc->C + ppc->GetVD() * 500.0f;
 
 	V3 quad_pos0 = groundCenter + V3(-500.0f, 0.0f, -500.0f);
@@ -121,23 +123,22 @@ Scene::Scene() {
 	Point quad_p1(quad_pos1, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(1.0f, 0.0f, 0.0f));
 	Point quad_p2(quad_pos2, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
 	Point quad_p3(quad_pos3, V3(1.0f, 1.0f, 1.0f), V3(0.0f, 1.0f, 0.0f), V3(1.0f, 1.0f, 0.0f));
-	ground->SetRectangleWithFourPoints(quad_p0, quad_p1, quad_p2, quad_p3);
+	tms[3].SetRectangleWithFourPoints(quad_p0, quad_p1, quad_p2, quad_p3);
 
-
-	float ground_scf = 1.0f;
-	ground->PositionAndSize(groundCenter + V3(0.0f, -1.0f, 0.0f) * ground_scf * tmSize, tmSize * 10.0f);
+	float ground_scf = 0.35f;
+	tms[3].PositionAndSize(groundCenter + V3(0.0f, -1.0f, 0.0f) * ground_scf * tmSize, tmSize * 10.0f);
 
 	// Position of PPC3
-	ppc3->C = tmCs[0] + V3(50.0f, 50.0f, 50.0f);
+	// ppc3->C = tmCs[0] + V3(50.0f, 50.0f, 50.0f);
 	//ppc3->PositionAndOrient(ppc3->C, tms[1].GetCenter(), V3(0.0f, 1.0f, 0.0f));
-	ppc3->PositionAndOrient(ppc3->C, ground->GetCenter(), V3(0.0f, 1.0f, 0.0f));
-
+	// ppc3->PositionAndOrient(ppc3->C, ground->GetCenter(), V3(0.0f, 1.0f, 0.0f));
 
 	ka = 0.2;
-
-	// Render(ppc3, fb3);
+	ppc->PositionAndOrient(ppc->C + V3(0.0f, 200.0f, 100.0f) , tms[0].GetCenter(), V3(0.0f, 1.0f, 0.0f));
+	// ppc->PositionAndOrient(ppc->C + V3(0.0f, 30.0, tmSize), tms[0].GetCenter(), V3(0.0f, 1.0f, 0.0f));
 	
 
+	// Render(ppc3, fb3);
 }
 
 
@@ -178,7 +179,7 @@ void Scene::RenderHW()
 	// Set camera parameters
 	ppc->SetIntrinsicsHW();
 	ppc->SetExtrinsicsHW();
-
+	
 	for (int tmi = 0; tmi < tmsN; tmi++) {
 		tms[tmi].RenderHW(ppc, hwfb);
 	}
@@ -187,18 +188,20 @@ void Scene::RenderHW()
 
 void Scene::RenderGPU()
 {
-
-
-
 	// if the first time, call per session initialization
 	if (cgi == NULL) {
 		cgi = new CGInterface();
 		cgi->PerSessionInit();
 		soi = new ShaderOneInterface();
 		soi->PerSessionInit(cgi);
+
+		std::string tmpTexName = ".\\texture_src\\quad_ice.tiff";
+		gpufb->LoadTiffToShader(&tmpTexName[0]);
 	}
 
 	// clear the framebuffer
+	if (isFrameMode)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0, 0.0f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -208,30 +211,24 @@ void Scene::RenderGPU()
 	// set extrinsics
 	ppc->SetExtrinsicsHW();
 
-	
-	std::string tmpTexName = ".\\texture_src\\quad_ice.tiff";
-
-	gpufb->LoadTiffToShader(&tmpTexName[0]);
-
-	// per frame initialization
 	cgi->EnableProfiles();
-	soi->PerFrameInit();
-	soi->BindPrograms();
-
 
 	// render geometry
 	for (int tmi = 0; tmi < tmsN; tmi++) 
 	{
+		// per frame initialization
+		shaderVariables curTmVar;
+		curTmVar.hasST = static_cast<int>(tms[tmi].hasST);
+		soi->PerFrameInit(curTmVar);
+		soi->BindPrograms();
+
 		tms[tmi].RenderHW(ppc, gpufb);
 	}
 
-	
-
-	ground->RenderHW(ppc, gpufb);
-
-
 	soi->PerFrameDisable();
 	cgi->DisableProfiles();
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void Scene::ReloadShaders()
@@ -278,7 +275,36 @@ void Scene::DBG()
 {
 	{
 		ReloadShaders();
-		gpufb->redraw();
+		V3 v = (L - tms[0].GetCenter()) * 10.0f;
+
+		int stepN = 360;
+		for(int i = 0; i < stepN; ++i)
+		{
+			float fract = (float)i / (float)stepN;
+
+			
+			// L = L + V3(0.0f,1.0f,0.0f);
+			L = L.RotateThisPointAboutArbitraryAxis(tms[0].GetCenter(), V3(0.0f, 1.0f, 0.0f), 1.0f);
+			V3 dx = V3(100.0f, 0.0f, 0.0f);
+			V3 dz = V3(0.0f, 0.0f, 100.0f);
+
+			lightQuad[0] = (L - dx - dz);
+			lightQuad[1] = (L - dx + dz);
+			lightQuad[2] = (L + dx + dz);
+			lightQuad[3] = (L + dx - dz);
+
+			// float tmSize = 100.0f;
+			// ground->PositionAndSize(ground->GetCenter() + V3(0.0f,1.0f,0.0f) , tmSize * 100.0f);
+			gpufb->redraw();
+			gpufb->GetRenderResult();
+
+			char filename[50];
+			sprintf_s(filename, "images/hw06-%03d.tiff", i);
+			gpufb->SaveAsTiff(filename);
+
+			Fl::check();
+		}
+
 		return;
 	}
 
@@ -381,7 +407,7 @@ void Scene::DBG()
 
 	{
 		// Random Axes
-		srand(static_cast<unsigned int>(time(0)));
+		// srand(static_cast<unsigned int>(time(0)));
 		std::vector<V3> axis;
 		axis.reserve(5);
 

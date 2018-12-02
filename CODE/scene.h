@@ -38,6 +38,7 @@ public:
 	V3 *tmCs;
 	int tmsN;
 	V3 L; // point light source
+	vector<V3> lightQuad;
 
 	// Cubes
 	TM *cube;
@@ -45,7 +46,6 @@ public:
 	int cubeN;
 
 	// Ground
-	TM *ground;
 	V3 *groundCs;
 	int groundN;
 
@@ -70,6 +70,8 @@ public:
 	float kse;
 	float ka;
 	float mf; // morph fraction
+
+	bool isFrameMode;
 };
 
 extern Scene *scene;

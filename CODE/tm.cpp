@@ -248,9 +248,14 @@ void TM::SetCube()
 	verts[23] = pos3;
 
 	// COLORS
-	for (int i = 0; i < 8; ++i)
+	for (int i = 0; i < vertsN; ++i)
 	{
-		colors[i] = V3(0.0f, 0.0f, 0.0f);
+		int c0 = rand() % 255;
+		int c1 = rand() % 255;
+		int c2 = rand() % 255;
+
+		V3 c(static_cast<float>(c0) / 255.0f, static_cast<float>(c1) / 255.0f, static_cast<float>(c2) / 255.0f);
+		colors[i] = c;
 	}
 
 	V3 origin(0.0f);
@@ -306,6 +311,14 @@ void TM::SetCube()
 	tris[trisCounter++] = 22;
 	tris[trisCounter] = 23;
 
+}
+
+void TM::SetColor(V3 color)
+{
+	for(int vi = 0; vi < vertsN; ++vi)
+	{
+		colors[vi] = color;
+	}
 }
 
 
@@ -694,12 +707,6 @@ void TM::RenderHW(PPC *ppc, FrameBuffer *currfb)
 	{
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 3 * sizeof(float), (float *)sta);
-	}
-
-	if (isRecording)
-	{
-		// grab all the colors to pixels
-		glReadPixels(0, 0, currfb->w, currfb->h, GL_RGBA, GL_UNSIGNED_BYTE, currfb->pix);
 	}
 
 	glDrawElements(GL_TRIANGLES, 3 * trisN, GL_UNSIGNED_INT, tris);

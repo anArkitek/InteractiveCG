@@ -17,7 +17,7 @@ struct VertexDataOutput {
 
 
 struct PixelDataOutput {
-	float3 color : COLOR;
+	float4 color : COLOR;
 };
 
 
@@ -55,23 +55,134 @@ TRIANGLE void GeometryMain(AttribArray<VertexDataOutput> tverts,
 
 }
 
+float4x4 px_cube1;
+float4x4 px_cube2;
+float4x4 px_cube3;
+float4x4 quad_light;
+
+bool RayFaceIntersect(float3 rayOri, float3 rayDir, float3x3 face)
+{
+	float3 corner = face[0];
+	float3 normal = normalize(cross(face[2] - corner,face[1] - corner));
+
+	// rayOri + rayDir * t = pos
+	// (pos-corner) * normal = 0.0
+	// (rayOri - corner + rayDir * t) * normal = 0
+	// (rayOri - corner) * normal = - rayDir * normal * t
+	// t = -((rayOri - corner) * normal)/(rayDir * normal)
+	float t = -dot((rayOri - corner), normal) / dot(rayDir, normal);
+	
+	// back
+	if(t < 0.0)
+		return false;
+
+	// check if inside the face
+	float3 intersectPos = rayOri + t * rayDir;
+	float3 posV = intersectPos - corner;
+	float3 x = face[2] - corner;
+	float3 y = face[1] - corner;
+	float u =  dot(normalize(x), posV) / length(x); 
+	float v =  dot(normalize(y), posV) / length(y);
+
+	if(v < 0.0 || v > 1.0 || u < 0.0 || u > 1.0)
+		return false;
+
+	return true;
+}
+
+bool RayBoxIntersect(float3 rayOri, float3 rayDir, float4x4 curBox)
+{
+	float3 corner = curBox[0].xyz;
+	float3 x = curBox[1].xyz - corner;
+	float3 y = curBox[2].xyz - corner;
+	float3 z = curBox[3].xyz - corner;
+	// top
+	float3x3 face0 = float3x3(corner, corner + x, corner + z);
+	
+	// bot
+	float3x3 face1 = float3x3(corner + y, corner + y + x, corner + y + z);
+	
+	// right
+	float3x3 face2 = float3x3(corner + x, corner + x + y, corner + x + z);
+	
+	// left
+	float3x3 face3 = float3x3(corner, corner + z, corner + y);
+	
+	// front
+	float3x3 face4 = float3x3(corner + z, corner + z + x, corner + z + y);
+	
+	// back
+	float3x3 face5 = float3x3(corner, corner + y, corner + x);
+
+	if( RayFaceIntersect(rayOri, rayDir, face0) || 
+		RayFaceIntersect(rayOri, rayDir, face1) ||
+		RayFaceIntersect(rayOri, rayDir, face2) ||
+		RayFaceIntersect(rayOri, rayDir, face3) ||
+		RayFaceIntersect(rayOri, rayDir, face4) ||
+		RayFaceIntersect(rayOri, rayDir, face5))
+		return true;
+	else
+		return false;
+}
+
+float quadLightShadow(float3 curPos)
+{
+	// calc dx, dz
+	float fact = 10.0f;
+	float3 dx = (quad_light[3] - quad_light[0]).xyz * fact;
+	float3 dz = (quad_light[1] - quad_light[0]).xyz* fact;
+
+	float sdCount = 0.0;
+	for(int r = 0; r< 16; ++r)
+	{
+		float r_fract = (float)r / (float)16;
+		for(int c = 0; c < 16; ++c)
+		{
+			float c_fract = (float)c / (float)16;
+			float3 lightPos = quad_light[0].xyz + dx * r_fract + dz * c_fract;
+			
+			float3 pos = curPos;
+			float3 dir = lightPos - curPos;
+			
+			float eps = 0.01;
+			if( RayBoxIntersect(pos + eps * normalize(dir), dir, px_cube1) || 
+				RayBoxIntersect(pos + eps * normalize(dir), dir, px_cube2) || 
+				RayBoxIntersect(pos + eps * normalize(dir), dir, px_cube3))
+			{
+				sdCount = sdCount + 1.0;
+			}	
+		}
+	}
+	return 1.0 - sdCount / (16.0 * 16.0);
+}
 
 PixelDataOutput FragmentMain(	VertexDataOutput pdi, 
+								uniform int hasST,
 								uniform float ka,
 								uniform float3 C0, 
-								uniform float3 C1
+								uniform float3 C1,
+								uniform float4x4 lightPos,
+								uniform float4x4 cube1,
+								uniform float4x4 cube2,
+								uniform float4x4 cube3,
+								uniform float planeHeight,
 								uniform sampler2D ice_tex) {
 
-  PixelDataOutput ret;
-  ret.color = pdi.color;
+  px_cube1 = cube1;
+  px_cube2 = cube2;
+  px_cube3 = cube3; 
+  quad_light = lightPos;
 
+  PixelDataOutput ret;
+  ret.color.rgb = pdi.color;
+  
 //  float ka = 0.2f;
-  float3 L = float3(0.0f, 0.0f, 0.0f);
-  float3 lv = float3(0.0f, 0.0f, 1.0f);
-  float kd = mul(pdi.normal, lv);
-  kd = (kd < 0.0f) ? 0.0f : kd;
-  float3 mc = float3(1.0f, 0.0f, 0.0f);
-  ret.color.rgb = mc * (ka + (1.0f-ka)*kd);
+  float3 L = lightPos[0].xyz;
+  float3 lv = normalize(L - pdi.vxyz);
+  float kd = dot(normalize(pdi.normal), lv);
+  kd = (kd < 0.0f) ? 0.0 : kd;
+  float3 mc = float3(0.0f, 0.0f, 0.0f);
+  
 
 //  ret.color.rgb = (pdi.normal + float3(1.0f, 1.0f, 1.0f))/2.0f;
 //  ret.color.rgb = float3(1.0f, 0.0f, 0.0f);
@@ -81,7 +192,27 @@ PixelDataOutput FragmentMain(	VertexDataOutput pdi,
 	
 	// ret.color.rgb = float3(0.0f, 0.0f, 0.0f);
 	// ret.color.rgb = (C0 + float3(150.0f, 150.0f, 150.0f)) / 30.0f;
-	ret.color.rgb = float3(ice_tex, pdi.vTexCoord);
+	float3 pos = pdi.vxyz;
+	float3 dir = L - pos;
+	float shadow = 1.0;
+	float eps = 0.001;
+	
+	if(hasST)
+	{
+		// ground		
+
+		shadow = quadLightShadow(pos);
+		mc = shadow * tex2D(ice_tex, pdi.vtexCoord).rgb;
+	}
+	else
+	{
+		// cube
+		shadow = quadLightShadow(pos);
+		mc = shadow * pdi.color;
+	}
+	// phong light
+	ret.color.rgb = mc * (ka + (1.0f-ka)*kd);
+	ret.color.a = 1.0;
 
     return ret;
 

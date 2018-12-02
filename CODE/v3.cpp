@@ -33,7 +33,7 @@ float V3::operator*(V3 v1) {
 
 ostream& operator<<(ostream& ostr, V3 v) {
 
-	return ostr << v[0] << " " << v[1] << " " << v[2];
+	return ostr << v[0] << " " << v[1] << " " << v[2] << endl;
 
 }
 
